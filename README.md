@@ -1,2 +1,2 @@
 # agent-mobility
-Framework for mobility of AI agent actors
+Framework for mobility of AI agent actors in maps
