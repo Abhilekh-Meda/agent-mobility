@@ -13,7 +13,7 @@ from ..models.enums import TransportMode
 from ..database.manager import DatabaseManager
 
 
-class NavigationSystem:
+class AgentMobilitySystem:
     """Main system for managing entity navigation"""
     
     def __init__(self, api_key: str, db_path: str = 'navigation.db'):

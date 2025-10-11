@@ -1,5 +1,5 @@
 """Services for the agent mobility system"""
 
-from .navigation import NavigationSystem
+from .navigation import AgentMobilitySystem
 
-__all__ = ['NavigationSystem']
+__all__ = ['AgentMobilitySystem']
