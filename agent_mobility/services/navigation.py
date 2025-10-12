@@ -383,3 +383,24 @@ class AgentMobilitySystem:
             cursor = conn.cursor()
             cursor.execute("SELECT entity_id FROM entities ORDER BY created_at")
             return [row['entity_id'] for row in cursor.fetchall()]
+
+    def get_entity(self, entity_id: str) -> 'Entity':
+        """
+        Get an Entity wrapper instance for convenient method access
+        
+        Args:
+            entity_id: ID of the entity
+            
+        Returns:
+            Entity instance that wraps this system
+            
+        Raises:
+            ValueError: If entity doesn't exist
+        """
+        from .entity import Entity
+        
+        # Verify entity exists
+        if not self.get_entity_state(entity_id):
+            raise ValueError(f"Entity {entity_id} not found")
+        
+        return Entity(self, entity_id)
