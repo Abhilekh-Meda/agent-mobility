@@ -28,61 +28,76 @@ class AgentMobilitySystem:
         self.db = DatabaseManager(db_path)
     
     def search_nearby(
-        self,
-        entity_id: str,
-        query: str,
-        radius: int = 5000,
-        max_results: int = 20
-    ) -> List[PlaceResult]:
-        """
-        Search for places near the entity's current location
+    self,
+    entity_id: str,
+    query: str,
+    radius: int = 5000,
+    max_results: int = 20,
+    transport_mode: Optional[TransportMode] = None) -> List[PlaceResult]:
+    """
+    Search for places near the entity's current location
+    
+    Args:
+        entity_id: ID of the entity searching
+        query: Search query (e.g., "restaurants", "coffee shops")
+        radius: Search radius in meters
+        max_results: Maximum number of results
+        transport_mode: Optional specific transport mode to calculate travel times.
+                       If None, calculates for all modes.
         
-        Args:
-            entity_id: ID of the entity searching
-            query: Search query (e.g., "restaurants", "coffee shops")
-            radius: Search radius in meters
-            max_results: Maximum number of results
-            
-        Returns:
-            List of PlaceResult objects with travel times
-        """
-        entity = self.get_entity_state(entity_id)
-        if not entity:
-            raise ValueError(f"Entity {entity_id} not found")
-        
-        origin = (entity.current_location.lat, entity.current_location.lng)
-        
-        # Search for places
-        places_result = places_nearby(
-            self.gmaps,
-            location=origin,
-            radius=radius,
-            keyword=query
+    Returns:
+        List of PlaceResult objects with travel times
+    """
+    entity = self.get_entity_state(entity_id)
+    if not entity:
+        raise ValueError(f"Entity {entity_id} not found")
+    
+    origin = (entity.current_location.lat, entity.current_location.lng)
+    
+    # Search for places
+    places_result = places_nearby(
+        self.gmaps,
+        location=origin,
+        radius=radius,
+        keyword=query
+    )
+    
+    results = []
+    destinations = []
+    
+    # Process results
+    for place in places_result.get('results', [])[:max_results]:
+        loc = place['geometry']['location']
+        place_result = PlaceResult(
+            place_id=place['place_id'],
+            name=place['name'],
+            address=place.get('vicinity', ''),
+            location=Location(lat=loc['lat'], lng=loc['lng']),
+            rating=place.get('rating'),
+            user_ratings_total=place.get('user_ratings_total'),
+            types=place.get('types', []),
+            price_level=place.get('price_level'),
+            open_now=place.get('opening_hours', {}).get('open_now'),
+            travel_times={}
         )
-        
-        results = []
-        destinations = []
-        
-        # Process results
-        for place in places_result.get('results', [])[:max_results]:
-            loc = place['geometry']['location']
-            place_result = PlaceResult(
-                place_id=place['place_id'],
-                name=place['name'],
-                address=place.get('vicinity', ''),
-                location=Location(lat=loc['lat'], lng=loc['lng']),
-                rating=place.get('rating'),
-                user_ratings_total=place.get('user_ratings_total'),
-                types=place.get('types', []),
-                price_level=place.get('price_level'),
-                open_now=place.get('opening_hours', {}).get('open_now'),
-                travel_times={}
+        results.append(place_result)
+        destinations.append((loc['lat'], loc['lng']))
+    
+    # Get travel times for specified transport mode(s)
+    if destinations:
+        if transport_mode:
+            # Calculate for single specified mode
+            travel_times = self._get_travel_times(
+                origin,
+                destinations,
+                transport_mode.value
             )
-            results.append(place_result)
-            destinations.append((loc['lat'], loc['lng']))
-        
-        # Get travel times for all transport modes
-        if destinations:
+            
+            for i, result in enumerate(results):
+                if i < len(travel_times):
+                    result.travel_times[transport_mode.value] = travel_times[i]
+        else:
+            # Calculate for all transport modes (original behavior)
             for mode in TransportMode:
                 travel_times = self._get_travel_times(
                     origin,
@@ -93,11 +108,11 @@ class AgentMobilitySystem:
                 for i, result in enumerate(results):
                     if i < len(travel_times):
                         result.travel_times[mode.value] = travel_times[i]
-        
-        # Save search to database
-        self._save_search_history(entity_id, query, radius, len(results))
-        
-        return results
+    
+    # Save search to database
+    self._save_search_history(entity_id, query, radius, len(results))
+    
+    return results
     
     def _get_travel_times(
         self,
