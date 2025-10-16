@@ -1,5 +1,5 @@
 # Agent Mobility System - Complete Reference Guide
-## This stuff is very likely to change very soon so update as needed.
+## This will evry likely change very soon so keep updating as needed
 
 ## Quick Start
 
@@ -193,6 +193,154 @@ for nav in history:
     print(nav['place_rating'])   # 4.5
     print(nav['place_lat'])      # 32.7150
     print(nav['place_lng'])      # -117.1600
+```
+
+---
+
+## Entity (Wrapper Class)
+
+**Purpose:** Convenient wrapper for entity-specific navigation operations. Eliminates need to repeatedly pass `entity_id` to system methods.
+
+### Constructor
+```python
+entity = Entity(system, "agent_001")
+# Or get from system:
+entity = system.get_entity_state("agent_001")
+```
+
+### Properties
+
+#### `state`
+**Returns:** `Optional[EntityState]`
+
+Get the current state of this entity.
+
+```python
+state = entity.state
+# Access: entity_id, current_location, destination, last_updated
+```
+
+#### `current_location`
+**Returns:** `Optional[Location]`
+
+Get the current location.
+
+```python
+loc = entity.current_location
+print(loc.lat, loc.lng)
+```
+
+#### `destination`
+**Returns:** `Optional[PlaceResult]`
+
+Get the current destination.
+
+```python
+dest = entity.destination
+if dest:
+    print(dest.name)
+```
+
+### Methods
+
+#### `search_nearby(query, radius=5000, max_results=20, transport_mode=None)`
+**Returns:** `List[PlaceResult]`
+
+Search for places near this entity.
+
+```python
+results = entity.search_nearby("coffee shops", radius=2000)
+# Same as: system.search_nearby(entity_id, "coffee shops", 2000)
+```
+
+**Parameters:**
+- `query`: Search term
+- `radius`: Search radius in meters
+- `max_results`: Max results to return
+- `transport_mode`: Optional specific transport mode
+
+#### `set_destination(place)`
+**Returns:** `None`
+
+Set a destination for this entity.
+
+```python
+entity.set_destination(results[0])
+# Same as: system.set_destination(entity_id, place)
+```
+
+#### `update_location(lat, lng, address=None)`
+**Returns:** `None`
+
+Update this entity's location.
+
+```python
+entity.update_location(32.7150, -117.1600, "Downtown")
+# Same as: system.update_location(entity_id, lat, lng, address)
+```
+
+#### `get_search_history(limit=50)`
+**Returns:** `List[Dict]`
+
+Get this entity's search history.
+
+```python
+history = entity.get_search_history(10)
+# Same as: system.get_search_history(entity_id, 10)
+```
+
+#### `get_navigation_history(limit=50)`
+**Returns:** `List[Dict]`
+
+Get this entity's navigation history.
+
+```python
+history = entity.get_navigation_history(10)
+# Same as: system.get_navigation_history(entity_id, 10)
+```
+
+#### `delete()`
+**Returns:** `None`
+
+Delete this entity and all associated data.
+
+```python
+entity.delete()
+# Same as: system.delete_entity(entity_id)
+```
+
+### String Representation
+
+```python
+print(entity)
+# Output: Entity(id='agent_001', location=(32.7157, -117.1611))
+
+repr(entity)
+# Same output
+```
+
+### Example Usage
+
+```python
+# Instead of repeatedly passing entity_id to system:
+# OLD WAY:
+system.search_nearby(entity_id, "coffee", 2000)
+system.set_destination(entity_id, place)
+system.update_location(entity_id, 32.7150, -117.1600)
+
+# NEW WAY (with Entity wrapper):
+entity = Entity(system, entity_id)
+entity.search_nearby("coffee", 2000)
+entity.set_destination(place)
+entity.update_location(32.7150, -117.1600)
+
+# Or cleaner:
+results = entity.search_nearby("restaurants", 3000)
+if results:
+    best = results[0]
+    entity.set_destination(best)
+    print(f"Navigating to {entity.destination.name}")
+    print(f"Travel time: {best.travel_times['driving'].duration_text}")
 ```
 
 ---
