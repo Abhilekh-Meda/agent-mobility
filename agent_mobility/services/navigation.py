@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 import googlemaps
 from googlemaps.distance_matrix import distance_matrix
@@ -28,12 +28,13 @@ class AgentMobilitySystem:
         self.db = DatabaseManager(db_path)
     
     def search_nearby(
-    self,
-    entity_id: str,
-    query: str,
-    radius: int = 5000,
-    max_results: int = 20,
-    transport_mode: Optional[TransportMode] = None) -> List[PlaceResult]:
+        self,
+        entity_id: str,
+        query: str,
+        radius: int = 5000,
+        max_results: int = 20,
+        transport_mode: Optional[TransportMode] = None
+    ) -> Tuple[List[PlaceResult], str]:
         """
         Search for places near the entity's current location
         
@@ -46,7 +47,7 @@ class AgentMobilitySystem:
                         If None, calculates for all modes.
             
         Returns:
-            List of PlaceResult objects with travel times
+            Tuple of (List of PlaceResult objects with travel times, status string)
         """
         entity = self.get_entity_state(entity_id)
         if not entity:
@@ -61,6 +62,9 @@ class AgentMobilitySystem:
             radius=radius,
             keyword=query
         )
+        
+        # Get status from API response
+        status = places_result.get('status', 'UNKNOWN')
         
         results = []
         destinations = []
@@ -112,7 +116,7 @@ class AgentMobilitySystem:
         # Save search to database
         self._save_search_history(entity_id, query, radius, len(results))
         
-        return results
+        return results, status
     
     def _get_travel_times(
         self,
@@ -162,7 +166,7 @@ class AgentMobilitySystem:
         
         return travel_infos
     
-    def get_place_details(self, place_id: str) -> Dict:
+    def get_place_details(self, place_id: str) -> Tuple[Dict, str]:
         """
         Get detailed information about a specific place
         
@@ -170,7 +174,7 @@ class AgentMobilitySystem:
             place_id: Google Maps place ID
             
         Returns:
-            Dictionary with place details including reviews
+            Tuple of (Dictionary with place details including reviews, status string)
         """
         result = self.gmaps.place(
             place_id=place_id,
@@ -181,7 +185,8 @@ class AgentMobilitySystem:
             ]
         )
         
-        return result.get('result', {})
+        status = result.get('status', 'UNKNOWN')
+        return result.get('result', {}), status
     
     def set_destination(self, entity_id: str, place: PlaceResult):
         """

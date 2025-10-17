@@ -1,6 +1,6 @@
 """Entity wrapper class for simplified navigation system access"""
 
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import List, Dict, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .navigation import AgentMobilitySystem
@@ -49,7 +49,7 @@ class Entity:
         radius: int = 5000,
         max_results: int = 20,
         transport_mode: Optional[TransportMode] = None
-    ) -> List[PlaceResult]:
+    ) -> Tuple[List[PlaceResult], str]:
         """
         Search for places near this entity's current location
         
@@ -60,7 +60,7 @@ class Entity:
             transport_mode: Optional specific transport mode to calculate travel times
             
         Returns:
-            List of PlaceResult objects with travel times
+            Tuple of (List of PlaceResult objects with travel times, status string)
         """
         return self._system.search_nearby(
             self.entity_id,
@@ -69,6 +69,18 @@ class Entity:
             max_results,
             transport_mode
         )
+    
+    def get_place_details(self, place_id: str) -> Tuple[Dict, str]:
+        """
+        Get detailed information about a specific place
+        
+        Args:
+            place_id: Google Maps place ID
+            
+        Returns:
+            Tuple of (Dictionary with place details including reviews, status string)
+        """
+        return self._system.get_place_details(place_id)
     
     def set_destination(self, place: PlaceResult):
         """
