@@ -1,0 +1,30 @@
+[project]
+name = "agent-mobility"
+version = "0.1.0"
+description = "Framework for simulating a society where ai agents are free to move on a map"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "langchain (>=1.0.2,<2.0.0)",
+    "langchain-core (>=1.0.0,<2.0.0)",
+    "langchain-openai (>=1.0.1,<2.0.0)",
+    "langgraph (>=1.0.1,<2.0.0)",
+    "pydantic (>=2.12.3,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=8.4.2,<9.0.0)",
+    "pytest-asyncio (>=1.2.0,<2.0.0)",
+    "black (>=25.9.0,<26.0.0)",
+    "ruff (>=0.14.2,<0.15.0)",
+    "mypy (>=1.18.2,<2.0.0)"
+]
