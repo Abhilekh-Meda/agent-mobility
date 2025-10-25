@@ -12,7 +12,8 @@ dependencies = [
     "langchain-core (>=1.0.0,<2.0.0)",
     "langchain-openai (>=1.0.1,<2.0.0)",
     "langgraph (>=1.0.1,<2.0.0)",
-    "pydantic (>=2.12.3,<3.0.0)"
+    "pydantic (>=2.12.3,<3.0.0)",
+    "langchain-google-genai (>=3.0.0,<4.0.0)"
 ]
 
 
