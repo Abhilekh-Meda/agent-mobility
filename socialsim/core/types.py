@@ -179,7 +179,7 @@ class Action(BaseModel):
     def to_string(self) -> str:
         """Convert action to string format for processing."""
         if self.target:
-            return f"{self.action_tgit ype.value}:{self.target}"
+            return f"{self.action_type.value}:{self.target}"
         return self.action_type.value
     
     @classmethod
