@@ -1,4 +1,7 @@
 """Utilities and tools."""
 
-# Will be populated when we add metrics and logging
-__all__ = []
+from socialsim.tools.metrics import MetricsCollector
+
+__all__ = [
+    "MetricsCollector",
+]

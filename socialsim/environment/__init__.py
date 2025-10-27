@@ -1,4 +1,8 @@
 """Environment systems."""
 
-# Will be populated when we add environment classes
-__all__ = []
+from socialsim.environment.simple import SimpleEnvironment, LocationInfo
+
+__all__ = [
+    "SimpleEnvironment",
+    "LocationInfo",
+]

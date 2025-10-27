@@ -1,4 +1,7 @@
 """Behavioral models for agents."""
 
-# Will be populated as we add behavioral models
-__all__ = []
+from socialsim.agents.behaviors.needs import NeedDrivenAgent
+
+__all__ = [
+    "NeedDrivenAgent",
+]
