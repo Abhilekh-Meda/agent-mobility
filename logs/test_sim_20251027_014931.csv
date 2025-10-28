@@ -1,2 +1,0 @@
-step,timestamp,num_agents,actions_taken,llm_calls,step_duration_seconds
-1,2025-10-27T01:49:31.253996,10,25,8,0.0

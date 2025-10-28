@@ -45,10 +45,23 @@ class Simulation:
         
         # Parse config
         config = config or {}
-        if isinstance(config, dict):
-            self.config = SimulationConfig(name=name, **config)
+        # create config model (caller may include 'name' in the config dict)
+        # Normalize incoming config to a dict and avoid passing 'name' twice
+        if config is None:
+            cfg = {}
+        elif isinstance(config, dict):
+            cfg = dict(config)
+        elif hasattr(config, "model_dump"):
+            cfg = dict(config.model_dump())
         else:
-            self.config = config
+            try:
+                cfg = dict(config)
+            except Exception:
+                cfg = {}
+        
+        # remove any 'name' provided by caller so we only pass it once
+        cfg.pop("name", None)
+        self.config = SimulationConfig(name=name, **cfg)
         
         # Core components
         self.agents: Dict[str, BaseAgent] = {}
