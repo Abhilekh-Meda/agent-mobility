@@ -127,7 +127,7 @@ def setup_urban_environment(sim: Simulation) -> None:
     # Commercial
     sim.environment.add_location(
         "grocery_store", "Joe's Grocery", "commercial",
-        capacity=50,
+        capacity=100,
         properties={"opens": 7, "closes": 22}
     )
     
@@ -255,7 +255,7 @@ def print_progress_update(sim: Simulation, step: int, total_steps: int):
     print()
 
 
-def analyze_results(sim: Simulation, results: dict):
+def analyze_results(sim: Simulation, results: dict, initial_agent_needs: dict = None):
     """Analyze and display simulation results.
     
     Args:
@@ -338,6 +338,47 @@ def analyze_results(sim: Simulation, results: dict):
     print(f"  Average Step Duration:  {metrics_summary['average_step_duration_seconds']:.3f}s")
     print()
 
+    print("\n📊 Need Changes & Recent Decisions")
+    print("-" * 70)
+    
+    # Sample a random agent for detailed view
+    sample_agent = random.choice(list(sim.agents.values()))
+    
+    # Get initial needs if we have them
+    initial_needs = initial_agent_needs.get(sample_agent.profile.agent_id, {}) if initial_agent_needs else {}
+    
+    print(f"\nAgent: {sample_agent.profile.name} ({sample_agent.profile.occupation})")
+    
+    # Show need deltas
+    print("\nNeed Changes:")
+    current_needs = sample_agent.state.needs
+    for need, final_value in current_needs.items():
+        initial = initial_needs.get(need, 0.0)
+        delta = final_value - initial
+        sign = "+" if delta >= 0 else ""
+        print(f"  {need:20s}: {final_value:.2f} ({sign}{delta:.2f} change)")
+    
+    # Get last decision and reasoning
+    if hasattr(sample_agent, "state"):
+        print("\nFinal State:")
+        print(f"  Activity: {sample_agent.state.current_activity}")
+        print(f"  Location: {sim.environment.get_agent_location(sample_agent.profile.agent_id)}")
+        
+        # Try to get reasoning through various methods
+        reasoning = None
+        if hasattr(sample_agent, "get_last_reasoning"):
+            reasoning = sample_agent.get_last_reasoning()
+        elif hasattr(sample_agent.state, "last_reasoning"):
+            reasoning = sample_agent.state.last_reasoning
+        elif hasattr(sample_agent.state, "reasoning"):
+            reasoning = sample_agent.state.reasoning
+            
+        if reasoning:
+            print("\nLast Reasoning:")
+            print(f"  {reasoning}")
+    
+    print("\n" + "="*70)
+
 
 def main():
     """Run the complete simulation example."""
@@ -349,22 +390,22 @@ def main():
     print("⚙️  Configuration")
     print("-" * 70)
     
-    NUM_AGENTS = 100
+    NUM_AGENTS = 50
     NUM_STEPS = 1000
     
     llm_config = {
         "provider": "openai",
-        "model": "gpt-4o-mini",
+        "model": "",
         "temperature": 0.7,
         "max_tokens": 256
     }
     
     sim_config = SimulationConfig(
-        name="urban_simulation_100",
+        name="urban_simulation_50",
         start_time=datetime(2024, 1, 1, 8, 0, 0),  # 8 AM
         time_step_seconds=300,  # 5 minutes per step
         max_steps=NUM_STEPS,
-        log_interval=100
+        log_interval=5
     )
     
     print(f"  Number of Agents:       {NUM_AGENTS}")
@@ -376,7 +417,7 @@ def main():
     
     # Create simulation
     print("🏗️  Creating Simulation...")
-    sim = Simulation("urban_simulation_100", sim_config.dict())
+    sim = Simulation("urban_simulation_50", sim_config.dict())
     
     # Set up environment
     print("🏙️  Setting Up Environment...")

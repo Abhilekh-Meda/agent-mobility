@@ -110,6 +110,8 @@ The person has needs based on Maslow's hierarchy:
 Consider their personality traits when making decisions.
 Be realistic - people prioritize lower-level needs first (physiological > safety > belonging > esteem > self-actualization).
 
+Choosing to do nothing is also an option.
+
 {format_instructions}"""
 
         user_message = """Current Situation:
