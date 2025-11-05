@@ -229,6 +229,88 @@ class BaseAgent(ABC):
     
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.profile.agent_id}>"
+    
+    # ========================================================================
+    # Phase 2: Serialization for Distributed Execution
+    # ========================================================================
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize agent state for distribution.
+        
+        Returns:
+            Dictionary containing serializable agent state
+        
+        Note:
+            - Excludes LLM object (not serializable)
+            - Truncates memory to last 100 items
+            - Includes all necessary state for reconstruction
+        """
+        return {
+            'class_name': self.__class__.__name__,
+            'profile': self.profile.model_dump(),
+            'state': self.state.model_dump(),
+            'memory': self.memory[-100:],  # Last 100 memories only
+            'stats': self.stats.copy(),
+            'memory_config': self.memory_config.copy()
+        }
+    
+    @classmethod
+    def from_dict(
+        cls, 
+        data: Dict[str, Any], 
+        llm_config: Dict[str, Any]
+    ) -> 'BaseAgent':
+        """Restore agent from serialized state.
+        
+        Args:
+            data: Serialized agent data
+            llm_config: LLM configuration
+            
+        Returns:
+            Reconstructed agent instance
+            
+        Raises:
+            ValueError: If data is invalid or incomplete
+        """
+        # Validate data
+        required_keys = ['profile', 'state']
+        for key in required_keys:
+            if key not in data:
+                raise ValueError(f"Missing required key: {key}")
+        
+        # Reconstruct profile and state
+        from socialsim.core.types import AgentProfile, AgentState
+        profile = AgentProfile(**data['profile'])
+        
+        # Create new agent instance
+        agent = cls(
+            profile=profile,
+            llm_config=llm_config,
+            memory_config=data.get('memory_config', {})
+        )
+        
+        # Restore state
+        agent.state = AgentState(**data['state'])
+        
+        # Restore memory
+        if 'memory' in data:
+            agent.memory = data['memory']
+        
+        # Restore stats
+        if 'stats' in data:
+            agent.stats = data['stats'].copy()
+        
+        return agent
+    
+    def get_serialized_size(self) -> int:
+        """Get approximate size of serialized agent in bytes.
+        
+        Returns:
+            Approximate size in bytes
+        """
+        import json
+        serialized = json.dumps(self.to_dict())
+        return len(serialized.encode('utf-8'))
 
 
 class RandomAgent(BaseAgent):
@@ -240,8 +322,13 @@ class RandomAgent(BaseAgent):
     - Debugging
     """
     
-    def __init__(self, profile: AgentProfile, llm_config: Dict[str, Any]):
-        super().__init__(profile, llm_config)
+    def __init__(
+        self, 
+        profile: AgentProfile, 
+        llm_config: Dict[str, Any],
+        memory_config: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(profile, llm_config, memory_config)
         self.available_actions = ["move:home", "move:work", "move:park", "rest", "eat"]
     
     def perceive(self, environment_state: Dict[str, Any]) -> Dict[str, Any]:
@@ -273,8 +360,13 @@ class SimpleReflexAgent(BaseAgent):
     More realistic than RandomAgent but still deterministic.
     """
     
-    def __init__(self, profile: AgentProfile, llm_config: Dict[str, Any]):
-        super().__init__(profile, llm_config)
+    def __init__(
+        self, 
+        profile: AgentProfile, 
+        llm_config: Dict[str, Any],
+        memory_config: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(profile, llm_config, memory_config)
         self.state.needs = {
             "hunger": 1.0,
             "energy": 1.0,

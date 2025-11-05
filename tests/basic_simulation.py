@@ -417,7 +417,7 @@ def main():
     
     # Create simulation
     print("🏗️  Creating Simulation...")
-    sim = Simulation("urban_simulation_50", sim_config.dict())
+    sim = Simulation("urban_simulation_50", sim_config.model_dump())
     
     # Set up environment
     print("🏙️  Setting Up Environment...")

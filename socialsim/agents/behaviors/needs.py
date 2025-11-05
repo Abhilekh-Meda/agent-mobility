@@ -110,8 +110,6 @@ The person has needs based on Maslow's hierarchy:
 Consider their personality traits when making decisions.
 Be realistic - people prioritize lower-level needs first (physiological > safety > belonging > esteem > self-actualization).
 
-Choosing to do nothing is also an option.
-
 {format_instructions}"""
 
         user_message = """Current Situation:
@@ -214,7 +212,6 @@ What should this person do next? Respond with a JSON object containing:
                 self.stats["llm_calls"] += 1
                 self.llm_cost_tracker["total_calls"] += 1
                 # Rough token estimate: ~500 tokens per call
-                #TODO: change this based on how much it actually costs
                 self.llm_cost_tracker["total_tokens"] += 500
                 # GPT-4o-mini: ~$0.00015 per 1K tokens (input) + $0.0006 per 1K tokens (output)
                 self.llm_cost_tracker["estimated_cost_usd"] += 0.0004
@@ -237,8 +234,8 @@ What should this person do next? Respond with a JSON object containing:
         """Determine if we should use LLM or fall back to rules.
         
         Use LLM when:
-        - Any need is critically low (< 0.2) - emergency situations use rules
-        - Every 3rd decision (to reduce costs) TODO: lets see about this
+        - No need is critically low (< 0.2) - emergency situations use rules
+        - Every 3rd decision (to reduce costs)
         
         Args:
             needs: Current need levels
@@ -278,7 +275,6 @@ What should this person do next? Respond with a JSON object containing:
             format_instructions=self.output_parser.get_format_instructions()
         )
         
-        #TODO: make this into ReAct framework prompt
         # Invoke LLM
         chain = prompt | self.llm | self.output_parser
         
@@ -398,7 +394,6 @@ What should this person do next? Respond with a JSON object containing:
                 "priority": 0.3
             }
     
-    #TODO: this is  very, very basic, will make it more robust later
     def act(self, decision: Dict[str, Any]) -> List[str]:
         """Convert decision into executable actions and update state.
         
@@ -458,3 +453,59 @@ What should this person do next? Respond with a JSON object containing:
                 max(1, self.llm_cost_tracker["total_calls"])
             )
         }
+    
+    # ========================================================================
+    # Phase 2: Enhanced Serialization
+    # ========================================================================
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize NeedDrivenAgent with additional state.
+        
+        Returns:
+            Dictionary with complete agent state
+        """
+        base_dict = super().to_dict()
+        
+        # Add NeedDrivenAgent-specific data
+        base_dict['need_decay_rates'] = self.need_decay_rates.copy()
+        base_dict['llm_cost_tracker'] = self.llm_cost_tracker.copy()
+        
+        return base_dict
+    
+    @classmethod
+    def from_dict(
+        cls,
+        data: Dict[str, Any],
+        llm_config: Dict[str, Any]
+    ) -> 'NeedDrivenAgent':
+        """Restore NeedDrivenAgent from serialized state.
+        
+        Args:
+            data: Serialized agent data
+            llm_config: LLM configuration
+            
+        Returns:
+            Reconstructed NeedDrivenAgent
+        """
+        from socialsim.core.types import AgentProfile, AgentState
+        
+        profile = AgentProfile(**data['profile'])
+        agent = cls(
+            profile=profile,
+            llm_config=llm_config,
+            memory_config=data.get('memory_config', {})
+        )
+        
+        # Restore state
+        agent.state = AgentState(**data['state'])
+        agent.memory = data.get('memory', [])
+        agent.stats = data.get('stats', agent.stats).copy()
+        
+        # Restore NeedDrivenAgent-specific data
+        if 'need_decay_rates' in data:
+            agent.need_decay_rates = data['need_decay_rates'].copy()
+        
+        if 'llm_cost_tracker' in data:
+            agent.llm_cost_tracker = data['llm_cost_tracker'].copy()
+        
+        return agent

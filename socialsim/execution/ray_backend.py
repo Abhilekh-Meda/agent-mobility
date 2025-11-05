@@ -79,7 +79,7 @@ class RayAgent:
             return {
                 'agent_id': self.agent_id,
                 'actions': actions,
-                'state': self.agent.state.dict(),
+                'state': self.agent.state.model_dump(),
                 'stats': self.agent.stats,
                 'success': True
             }
@@ -100,8 +100,8 @@ class RayAgent:
         """
         return {
             'agent_id': self.agent_id,
-            'profile': self.agent.profile.dict(),
-            'state': self.agent.state.dict(),
+            'profile': self.agent.profile.model_dump(),
+            'state': self.agent.state.model_dump(),
             'memory': self.agent.memory[-100:],  # Last 100 only
             'stats': self.agent.stats
         }
@@ -188,8 +188,8 @@ class RayExecutionEngine:
         for agent_id, agent in agents.items():
             agent_data = {
                 'class_name': agent.__class__.__name__,
-                'profile': agent.profile.dict(),
-                'state': agent.state.dict(),
+                'profile': agent.profile.model_dump(),
+                'state': agent.state.model_dump(),
                 'memory': agent.memory[-100:],  # Last 100 memories
                 'stats': agent.stats
             }
