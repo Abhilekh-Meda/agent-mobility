@@ -395,7 +395,7 @@ def main():
     
     llm_config = {
         "provider": "openai",
-        "model": "",
+        "model": "gpt-4o-mini",
         "temperature": 0.7,
         "max_tokens": 256
     }
